@@ -1,0 +1,111 @@
+<script src='../lib/fx.js'></script>
+
+# Promise
+
+## 일급
+<script>
+// function add10(a, callback) {
+//     setTimeout(() => callback(a + 10), 100);
+// };
+
+// var a = add10(5, res => {
+//     add10(res, res => {
+//         add10(res, res => {
+//             log('add10', res)
+//         })
+//     })
+// })
+
+// log('raw a', a);
+
+// function add20(a) {
+//     return new Promise(resolve => setTimeout(() => resolve(a + 20), 100));
+// };
+
+// var b = add20(5)
+//     .then(add20)
+//     .then(add20)
+//     .then(res => log('add20', res))
+
+// log('raw b', b);
+</script>
+
+
+## 일급 활용
+<script>
+// const go11 = (a, f) => a instanceof Promise ? a.then(f) : f(a);
+// const add5 = a => a+5;
+// const delay100 = (a) => new Promise(resolve => setTimeout(() => resolve(a), 100));
+
+// // # 1
+// var r = go11(10, add5);
+// log('r', r);
+// var r2 = go11(delay100(10), add5);
+// r2.then(res => log('r2', res));
+
+// // # 2
+// go11(go11(10, add5), res => log('r', res))
+// go11(go11(delay100(10), add5), res => log('r2', res))
+
+// //# 3
+// const n1 = go11(10, add5);
+// const n2 = go11(delay100(10), add5);
+// log(1, go11(n1, log));
+// log(2, go11(n2, log));
+</script>
+
+
+## Composition
+<script type="module">
+// // f. g
+// // f(g(x))
+
+// const g = a => a + 1;
+// const f = a => a * 2;
+
+// // # 1-1
+// log(f(g(1)));
+// log(f(g()));
+// // # 1-2 배열모나드
+// Array.of(1).map(g).map(f).forEach(e => log(e));
+// Array.of().map(g).map(f).forEach(e => log(e))
+    
+// // # 2 비동기모나드
+// log(Promise.resolve(2).then(g).then(f).then(r => log('1', r)))
+// new Promise(resolve => resolve(2)).then(g).then(f).then(r => log('2', r))
+
+</script>
+
+
+
+## Kleisli Composition
+<script>
+// f . g
+// f(g(x)) = f(g(x))
+// f(g(x)) = g(x)   g평가에서 오류가 발생할때도 결과같게.
+
+var users = [
+    {id: 1, name: 'aa'},
+    {id: 2, name: 'bb'},
+    {id: 3, name: 'cc'},
+];
+
+const getUserById = id => 
+    find(u => id == u.id, users) || Promise.reject('없어요!');
+
+const f = ({name}) => name;     // 인자를 구조분해 {name}
+const g = getUserById;
+
+// const fg = id => f(g(id))
+// const fg2 = id => new Promise(resolve => resolve(id)).then(g).then(f).catch(a=>a);
+const fg = id => Promise.resolve(id).then(g).then(f).catch(a => a);
+
+log(fg(4).then(log))
+    
+setTimeout(() => {
+    users.pop();
+    users.pop();
+    fg(2).then(log);
+}, 100)
+
+</script>
